@@ -79,6 +79,7 @@ export interface Sprites {
     other?:             Other;
     versions?:          Versions;
     animated?:          Sprites;
+    front?   :          string;
 }
 
 export interface GenerationI {

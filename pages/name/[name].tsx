@@ -45,7 +45,7 @@ export const PokemonByNamePage: FC<Props> = ({pokemon}) => {
                 <Card hoverable css={{padding: '30px'}} >
                     <Card.Body>
                     <Card.Image
-                        src={pokemon.sprites.other?.['official-artwork'].front_default || '/no-image.png'}
+                        src={pokemon.sprites.front || '/no-image.png'}
                         alt= {pokemon.name}
                         width= "100%"
                         height={200}
@@ -111,14 +111,14 @@ export const PokemonByNamePage: FC<Props> = ({pokemon}) => {
 
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
-    const { data } = await pokeApi.get<PokemonListResponse>('/pokemon?limit=151');
+    const { data } = await pokeApi.get<PokemonListResponse>('/pokemon?limit=50');
     const pokemonNames: string[] = data.results.map( pokemon => pokemon.name );
 
     return{
         paths:pokemonNames.map(name => ({
             params: {name}
         })),
-        fallback: false
+        fallback: 'blocking'
     }
 }
 
@@ -126,10 +126,22 @@ export const getStaticProps: GetStaticProps = async ({params}) => {
 
     const {name} = params as {name: string};
 
+    const pokemon = await getPokemonInfo(name);
+
+    if( !pokemon ){
+        return{
+            redirect: {
+                destination: '/',
+                permanent: false,
+            }
+        }
+    }
+
     return {
       props: {
-        pokemon: await getPokemonInfo(name)
-      }
+        pokemon
+      },
+      revalidate: 86400,
     }
   }
 

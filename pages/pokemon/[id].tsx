@@ -5,7 +5,7 @@ import { GetStaticProps, GetStaticPaths, NextPage } from 'next';
 
 import confetti from 'canvas-confetti';
 
-import { pokeApi } from '../../api';
+
 import { Layout } from "../../components/layouts";
 import { Pokemon } from '../../interfaces';
 import { getPokemonInfo, localFavorites } from '../../utils';
@@ -45,7 +45,7 @@ const PokemonPage: NextPage<Props> = ({pokemon}) => {
           <Card hoverable css={{padding: '30px'}} >
             <Card.Body>
               <Card.Image
-                src={pokemon.sprites.other?.['official-artwork'].front_default || '/no-image.png'}
+                src={pokemon.sprites.front || '/no-image.png'}
                 alt= {pokemon.name}
                 width= "100%"
                 height={200}
@@ -112,7 +112,7 @@ const PokemonPage: NextPage<Props> = ({pokemon}) => {
 
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
-  const pokemon151 = [...Array(151)].map((value, index) => `${index + 1}`);
+  const pokemon151 = [...Array(50)].map((value, index) => `${index + 1}`);
 
   return {
     // paths: [
@@ -129,7 +129,8 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
     paths: pokemon151.map( id => ({
       params: {id}
     })),
-    fallback: false
+    // fallback: false
+    fallback: 'blocking'
   }
 }
 
@@ -139,11 +140,24 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 export const getStaticProps: GetStaticProps = async ({params}) => {
 
   const {id} = params as {id: string};
+
+  const pokemon = await getPokemonInfo(id);
+
+  if( !pokemon ) {
+    return{
+      redirect: {
+        destination: '/',
+        permanent: false
+      }
+    }
+  }
   
   return {
     props: {
-      pokemon: await getPokemonInfo( id )
-    }
+      // pokemon: pokemon
+      pokemon
+    },
+    revalidate: 86400,
   }
 }
 
